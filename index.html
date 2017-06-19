@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script src="http://dimplejs.org/dist/dimple.v2.0.0.min.js"></script>
+  <style>
+
+    circle{
+      opacity:0.4;
+      stroke :none;
+    }
+    body {
+      background-color: white;
+      margin: 40px auto;
+      padding: 0px;
+      width: 1050px;
+      height: 640px;
+      box-shadow: 0 3px 6px 0 rgba(0, 0, 0, 0.32), 0 3px 12px 0 rgba(0, 0, 0, 0.24);
+    }
+    .title {
+      font-size: 2.5em;
+      font-family: sans-serif;
+      color: steelblue;
+      text-align: center;
+      padding: 15px 0px 5px 0px;
+    }
+
+    .chart {
+      margin: 0px auto;
+      padding: 0px;
+      background-color: white;
+    }
+    rect{
+      stroke: black;
+      shape-rendering: crispEdges;
+      fill:teal;
+    }
+
+    .axis path,
+    .axis line {
+      fill: none;
+      stroke: black;
+      shape-rendering: crispEdges;
+    }
+
+    .notes {
+      font-size: 12px;
+      font-family: sans-serif;
+      color: steelblue;
+      padding: 20px;
+      text-align: center;
+    }
+
+  </style>
+    <script type="text/javascript">
+      function draw(data) {
+      
+      /*
+        D3.js setup code
+      */
+
+          "use strict";
+          var margin = 75,
+              width = 1400 - margin,
+              height = 600 - margin,
+              radius = 2,
+              color = "blue";
+
+	      d3.select("body")
+		      .append("h2")
+		      .text("World Cup Attendance");
+
+          var svg = d3.select("body")
+              .append("svg")
+              .attr("width", width + margin)
+              .attr("height", height + margin)
+              .append('g').attr('class','chart');
+
+      /*
+        Dimple.js Chart construction code
+      */
+//
+//          var myChart = new dimple.chart(svg, data);
+//          var x = myChart.addTimeAxis("x", "year");
+//          x.dateParseFormat="%Y";
+//          x.tickFormat="%Y";
+//          x.timeInterval=4;
+//          myChart.addMeasureAxis("y", "attendance");
+//	      myChart.addSeries(null, dimple.plot.scatter);
+//	      myChart.addSeries(null, dimple.plot.line);
+//          myChart.draw();
+
+
+          d3.select('svg')
+              .selectAll("circle")
+              .data(data)
+              .enter()
+              .append("circle");
+
+          var time_extent=d3.extent(data,function(d){
+          	return d['date'];
+          });
+
+	      var count_extent=d3.extent(data,function(d){
+		      return d['attendance'];
+	      });
+
+	      var time_scale=d3.time.scale()
+              .range([margin,width])
+              .domain(time_extent);
+
+	      var count_scale=d3.scale.linear()
+		      .range([height,margin])
+		      .domain(count_extent);
+
+	      var time_axis=d3.svg.axis()
+              .scale(time_scale)
+              .ticks(d3.time.years,4);
+
+	      var count_axis=d3.svg.axis()
+		      .scale(count_scale)
+		      .orient("left");
+
+	      d3.select('svg')
+              .append('g')
+              .attr('class','x axis')
+              .attr('transform','translate(0,'+ height +')')
+              .call(time_axis);
+
+	      d3.select('svg')
+		      .append('g')
+		      .attr('class','y axis')
+		      .attr('transform','translate('+ margin +',0)')
+		      .call(count_axis);
+
+	      d3.selectAll('circle')
+              .attr('cx',function(d){
+	      	return time_scale(d['date']);
+          })
+              .attr('cy',function(d){
+		      return count_scale(d['attendance']);
+	      })
+              .attr('r',function(d){
+	              if(d['team1']==d['home']||d['team2']==d['home']){
+		              return 5;
+	              }
+	              else{
+		              return radius;
+	              }
+              })
+              .attr('fill',function(d){
+	              if(d['team1']==d['home']||d['team2']==d['home']){
+		              return 'red';
+	              }
+	              else{
+		              return color;
+	              }
+
+              });
+
+	      var legend = svg.append('g')
+              .attr('class','legend')
+              .attr('transform','translate('+(width-100)+','+20 +')')
+              .selectAll('g')
+              .data(['Home Team','others'])
+              .enter().append('g');
+
+	      legend.append('circle')
+              .attr('cy',function(d,i){
+              	return i*30;
+              })
+              .attr('r',function(d){
+	              if(d=="Home Team"){
+		              return 5;
+	              }
+	              else{
+		              return radius;
+	              }
+
+              })
+              .attr('fill',function(d){
+	              if(d=="Home Team"){
+		              return 'red';
+	              }
+	              else{
+		              return 'blue';
+	              }
+              });
+	      legend.append('text')
+              .attr('y',function(d,i){
+              	return i*30+5;
+              })
+              .attr('x',radius * 5)
+              .text(function(d){
+              	return d;
+              });
+
+
+
+        };
+      function visualize(data){
+
+	      "use strict";
+	      var margin = 85,
+		      width = 1000 - margin,
+		      height = 500 - margin,
+		      radius = 2,
+		      color = "blue";
+
+	      var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+	      var formatCurrency = d3.format("$,.2f");
+
+	      var formatTime =d3.time.format("%Y-%m-%d");
+
+	      var url = 'https://raw.githubusercontent.com/FreeCodeCamp/ProjectReferenceData/master/GDP-data.json';
+
+
+
+
+	      function update_format(d){
+		      d.data=d.data.map(function(d){
+
+			      d[0]=formatTime.parse(d[0]);
+			      d[1]=+d[1];
+			      return d;
+
+		      });
+	      }
+
+	      update_format(data);
+
+	      d3.select(".notes")
+		      .append("text")
+		      .text(data.description);
+
+
+	      d3.select(".title")
+		      .text("Gross Domestic Product");
+
+	      var svg = d3.select(".chart")
+		      .attr("width", width + margin)
+		      .attr("height", height + margin)
+		      .append('g').attr('class','barChart');
+
+
+	      d3.select('svg')
+		      .selectAll("circle")
+		      .data(data.data)
+		      .enter()
+		      .append("rect");
+
+
+
+	      var time_extent=d3.extent(data.data,function(d){
+		      return d[0];
+	      });
+
+	      var count_extent=d3.extent(data.data,function(d){
+		      return d[1];
+	      });
+
+	      var time_scale=d3.time.scale()
+		      .range([margin,width])
+		      .domain(time_extent);
+
+	      var count_max=d3.max(data.data,function(d){
+		      return d[1];
+	      });
+
+	      var count_scale=d3.scale.linear()
+		      .range([height,margin])
+		      .domain([0,count_max]);
+
+
+
+	      var barHeight_scale=d3.scale.linear()
+		      .range([height,margin])
+		      .domain([0,count_max]);
+
+	      var barWidth = Math.ceil(width / data.data.length);
+
+
+
+	      var time_axis=d3.svg.axis()
+		      .scale(time_scale)
+		      .ticks(d3.time.years,5);
+
+	      var count_axis=d3.svg.axis()
+		      .scale(count_scale)
+		      .orient("left");
+
+	      d3.select('svg')
+		      .append('g')
+		      .attr('class','x axis')
+		      .attr('transform','translate(0,'+ height +')')
+		      .call(time_axis);
+
+	      d3.select('svg')
+		      .append('g')
+		      .attr('class','y axis')
+		      .attr('transform','translate('+ margin +',0)')
+		      .call(count_axis);
+
+	      d3.selectAll('rect')
+		      .attr('x',function(d){
+			      return time_scale(d[0]);
+		      })
+		      .attr('y',function(d){
+			      return count_scale(d[1]);
+		      })
+		      .attr('height',function(d){
+			      return height-barHeight_scale(d[1]);
+		      })
+              .attr('width',barWidth);
+
+
+
+
+
+
+
+
+
+
+
+
+
+      };
+      </script>
+  </head>
+<body>
+  <!--<script type="text/javascript">-->
+  <!--/*-->
+    <!--Use D3 (not dimple.js) to load the TSV file-->
+    <!--and pass the contents of it to the draw function-->
+    <!--*/-->
+  <!--var format =d3.time.format("%d-%m-%Y (%H:%M h)");-->
+  <!--d3.tsv("world_cup_geo.tsv",function(d){-->
+  	<!--d['date']=format.parse(d['date']);-->
+  	<!--d['attendance']=+d["attendance"];-->
+  	<!--return d;-->
+  <!--} ,draw);-->
+  <!--</script>-->
+
+
+
+
+  <script type="text/javascript">
+    /*
+     Use D3 to load the GeoJSON file
+
+
+     */
+
+
+
+    d3.json("GDP-data.json", visualize);
+  </script>
+
+
+  <div class="title">Gross Domestic Product</div>
+
+  <svg class="chart"></svg>
+
+  <div class="notes"></div>
+
+
+
+
+</body>
+</html>
